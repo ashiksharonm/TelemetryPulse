@@ -23,9 +23,9 @@ services:
       - key: KAFKA_BOOTSTRAP_SERVERS
         sync: false
       - key: KAFKA_SASL_USERNAME
-        sync: false
+        value: ""
       - key: KAFKA_SASL_PASSWORD
-        sync: false
+        value: ""
       - key: KAFKA_SECURITY_PROTOCOL
         value: SASL_SSL
       - key: KAFKA_SASL_MECHANISM
