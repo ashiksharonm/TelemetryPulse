@@ -109,7 +109,7 @@ def process_aggregates(event: TelemetryEvent):
         "value": event.value
     })
 
-def main():
+def consumer_loop():
     consumer = create_consumer()
     try:
         consumer.subscribe([settings.KAFKA_TOPIC_EVENTS])
@@ -149,7 +149,7 @@ def main():
             except ValidationError as ve:
                 logger.warning(f"Validation Error: {ve}")
                 send_to_dlq(msg.value(), f"Validation Error: {ve}")
-                consumer.commit(message=msg, asynchronous=True) # Commit so we don't get stuck
+                consumer.commit(message=msg, asynchronous=True) 
                 
             except json.JSONDecodeError as je:
                 logger.warning(f"JSON Error: {je}")
@@ -158,16 +158,34 @@ def main():
 
             except Exception as e:
                 logger.error(f"Unexpected error: {e}")
-                # For DB errors or other transient issues, we might NOT want to commit 
-                # to trigger re-processing. 
-                # But for this demo, let's log and continue or maybe DLQ if persistent.
-                # Simplest for now: retry loop logic is needed for robustness, but here we just log.
 
     except KeyboardInterrupt:
         logger.info("Stopping consumer...")
     finally:
         consumer.close()
         dlq_producer.flush()
+
+def main():
+    import threading
+    import os
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    # Start consumer in background
+    logger.info("Starting consumer loop in background thread...")
+    t = threading.Thread(target=consumer_loop, daemon=True)
+    t.start()
+
+    # Dummy HTTP server
+    class HealthCheckHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    logger.info(f"Starting dummy HTTP server on port {port}")
+    server.serve_forever()
 
 if __name__ == "__main__":
     main()

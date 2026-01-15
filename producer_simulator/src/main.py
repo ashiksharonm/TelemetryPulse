@@ -46,7 +46,7 @@ def generate_value(sensor_type):
         return float(random.choice([0, 1])) # 0 or 1
     return 0.0
 
-def main():
+def producer_loop():
     logger.info(f"Starting Producer Simulator. Target: {settings.KAFKA_BOOTSTRAP_SERVERS}")
     
     conf = {
@@ -88,9 +88,6 @@ def main():
         start_time = time.time()
         
         # Batch generation
-        # We want EVENTS_PER_SECOND.
-        # We can pick random devices and sensors.
-        
         for _ in range(settings.EVENTS_PER_SECOND):
             device_cfg = random.choice(devices)
             sensor_type = random.choice(sensor_types)
@@ -129,6 +126,28 @@ def main():
     logger.info("Flushing records...")
     producer.flush()
     logger.info("Producer stopped.")
+
+def main():
+    import threading
+    import os
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+
+    # Start producer in background
+    logger.info("Starting producer loop in background thread...")
+    t = threading.Thread(target=producer_loop, daemon=True)
+    t.start()
+
+    # Dummy HTTP server
+    class HealthCheckHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"OK")
+
+    port = int(os.getenv("PORT", 10000))
+    server = HTTPServer(('0.0.0.0', port), HealthCheckHandler)
+    logger.info(f"Starting dummy HTTP server on port {port}")
+    server.serve_forever()
 
 if __name__ == "__main__":
     main()

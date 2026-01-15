@@ -2,6 +2,7 @@ services:
   # 1. API Service (Web Service)
   - type: web
     name: telemetry-api
+    plan: free
     env: python
     buildCommand: pip install -r api_service/requirements.txt
     startCommand: uvicorn api_service.src.main:app --host 0.0.0.0 --port $PORT
@@ -11,9 +12,10 @@ services:
       - key: PYTHONPATH
         value: /opt/render/project/src
 
-  # 2. Stream Processor (Background Worker)
-  - type: worker
+  # 2. Stream Processor (Converted to Web for Free Tier)
+  - type: web
     name: stream-processor
+    plan: free
     env: python
     buildCommand: pip install -r stream_processor/requirements.txt
     startCommand: python -m stream_processor.src.main
@@ -33,9 +35,10 @@ services:
       - key: PYTHONPATH
         value: /opt/render/project/src
 
-  # 3. Producer Simulator (Background Worker)
-  - type: worker
+  # 3. Producer Simulator (Converted to Web for Free Tier)
+  - type: web
     name: producer-simulator
+    plan: free
     env: python
     buildCommand: pip install -r producer_simulator/requirements.txt
     startCommand: python -m producer_simulator.src.main
