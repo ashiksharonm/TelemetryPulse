@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from typing import List, Optional
 from datetime import datetime
-from src.db import get_db
+from api_service.src.db import get_db
+
 
 app = FastAPI(title="TelemetryPulse Analytics API", version="1.0.0")
 

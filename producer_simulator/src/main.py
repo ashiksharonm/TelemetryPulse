@@ -7,9 +7,11 @@ import sys
 from datetime import datetime
 from uuid import uuid4
 
+
 from confluent_kafka import Producer
-from src.config import settings
-from src.schema import TelemetryEvent
+from producer_simulator.src.config import settings
+from producer_simulator.src.schema import TelemetryEvent
+
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

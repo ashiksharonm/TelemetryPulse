@@ -4,12 +4,12 @@ import json
 import socket
 from confluent_kafka import Consumer, Producer, KafkaException, KafkaError
 
-from src.config import settings
-from src.model import TelemetryEvent
+from stream_processor.src.config import settings
+from stream_processor.src.model import TelemetryEvent
 from datetime import datetime, timedelta
 from uuid import uuid4
 from pydantic import ValidationError
-from src.db import insert_event, insert_alert, upsert_aggregate_5m, upsert_aggregate_15m
+from stream_processor.src.db import insert_event, insert_alert, upsert_aggregate_5m, upsert_aggregate_15m
 
 # ... imports ...
 
