@@ -30,6 +30,12 @@ services:
         value: SASL_SSL
       - key: KAFKA_SASL_MECHANISM
         value: SCRAM-SHA-256
+      - key: KAFKA_SSL_CA
+        sync: false
+      - key: KAFKA_SSL_CERT
+        sync: false
+      - key: KAFKA_SSL_KEY
+        sync: false
       - key: DATABASE_URL
         sync: false
       - key: PYTHONPATH
@@ -53,6 +59,12 @@ services:
         value: SASL_SSL
       - key: KAFKA_SASL_MECHANISM
         value: SCRAM-SHA-256
+      - key: KAFKA_SSL_CA
+        sync: false
+      - key: KAFKA_SSL_CERT
+        sync: false
+      - key: KAFKA_SSL_KEY
+        sync: false
       - key: EVENTS_PER_SECOND
         value: "2"
       - key: PYTHONPATH

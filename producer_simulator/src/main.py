@@ -63,6 +63,25 @@ def producer_loop():
             'sasl.username': settings.KAFKA_SASL_USERNAME,
             'sasl.password': settings.KAFKA_SASL_PASSWORD,
         })
+    elif settings.KAFKA_SSL_CA:
+        import tempfile
+        def create_temp_cert(content):
+            t = tempfile.NamedTemporaryFile(delete=False, mode='w')
+            t.write(content)
+            t.close()
+            return t.name
+
+        ca_path = create_temp_cert(settings.KAFKA_SSL_CA)
+        cert_path = create_temp_cert(settings.KAFKA_SSL_CERT)
+        key_path = create_temp_cert(settings.KAFKA_SSL_KEY)
+
+        conf.update({
+            'security.protocol': 'SSL',
+            'ssl.ca.location': ca_path,
+            'ssl.certificate.location': cert_path,
+            'ssl.key.location': key_path,
+        })
+
 
     producer = Producer(conf)
 

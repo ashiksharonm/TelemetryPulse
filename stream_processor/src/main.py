@@ -16,35 +16,50 @@ from src.db import insert_event, insert_alert, upsert_aggregate_5m, upsert_aggre
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("stream_processor")
 
+def get_kafka_config(base_conf):
+    conf = base_conf.copy()
+    if settings.KAFKA_SASL_USERNAME:
+        conf.update({
+            'security.protocol': settings.KAFKA_SECURITY_PROTOCOL,
+            'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
+            'sasl.username': settings.KAFKA_SASL_USERNAME,
+            'sasl.password': settings.KAFKA_SASL_PASSWORD,
+        })
+    elif settings.KAFKA_SSL_CA:
+        import tempfile
+        def create_temp_cert(content):
+            t = tempfile.NamedTemporaryFile(delete=False, mode='w')
+            t.write(content)
+            t.close()
+            return t.name
+
+        ca_path = create_temp_cert(settings.KAFKA_SSL_CA)
+        cert_path = create_temp_cert(settings.KAFKA_SSL_CERT)
+        key_path = create_temp_cert(settings.KAFKA_SSL_KEY)
+
+        conf.update({
+            'security.protocol': 'SSL',
+            'ssl.ca.location': ca_path,
+            'ssl.certificate.location': cert_path,
+            'ssl.key.location': key_path,
+        })
+    return conf
+
 def create_consumer():
-    conf = {
+    base_conf = {
         'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
         'group.id': settings.KAFKA_GROUP_ID,
         'auto.offset.reset': 'earliest',
         'enable.auto.commit': False
     }
-    if settings.KAFKA_SASL_USERNAME:
-        conf.update({
-            'security.protocol': settings.KAFKA_SECURITY_PROTOCOL,
-            'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
-            'sasl.username': settings.KAFKA_SASL_USERNAME,
-            'sasl.password': settings.KAFKA_SASL_PASSWORD,
-        })
-    return Consumer(conf)
+    return Consumer(get_kafka_config(base_conf))
 
 def create_producer():
-    conf = {
+    base_conf = {
         'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
         'client.id': socket.gethostname()
     }
-    if settings.KAFKA_SASL_USERNAME:
-        conf.update({
-            'security.protocol': settings.KAFKA_SECURITY_PROTOCOL,
-            'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
-            'sasl.username': settings.KAFKA_SASL_USERNAME,
-            'sasl.password': settings.KAFKA_SASL_PASSWORD,
-        })
-    return Producer(conf)
+    return Producer(get_kafka_config(base_conf))
 
 dlq_producer = create_producer()
 
