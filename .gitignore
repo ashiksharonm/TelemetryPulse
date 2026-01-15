@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.env
+.venv/
+env/
+venv/
+.idea/
+.vscode/
+*.DS_Store
+postgres_data/
+redpanda_data/
+coverage.xml
+htmlcov/
