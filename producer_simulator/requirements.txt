@@ -1,3 +1,5 @@
-confluent-kafka==2.3.0
+confluent-kafka>=2.3.0
+wheel
+
 pydantic==2.5.3
 pydantic-settings==2.1.0
