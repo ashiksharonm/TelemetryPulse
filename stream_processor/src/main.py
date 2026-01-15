@@ -23,6 +23,13 @@ def create_consumer():
         'auto.offset.reset': 'earliest',
         'enable.auto.commit': False
     }
+    if settings.KAFKA_SASL_USERNAME:
+        conf.update({
+            'security.protocol': settings.KAFKA_SECURITY_PROTOCOL,
+            'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
+            'sasl.username': settings.KAFKA_SASL_USERNAME,
+            'sasl.password': settings.KAFKA_SASL_PASSWORD,
+        })
     return Consumer(conf)
 
 def create_producer():
@@ -30,6 +37,13 @@ def create_producer():
         'bootstrap.servers': settings.KAFKA_BOOTSTRAP_SERVERS,
         'client.id': socket.gethostname()
     }
+    if settings.KAFKA_SASL_USERNAME:
+        conf.update({
+            'security.protocol': settings.KAFKA_SECURITY_PROTOCOL,
+            'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
+            'sasl.username': settings.KAFKA_SASL_USERNAME,
+            'sasl.password': settings.KAFKA_SASL_PASSWORD,
+        })
     return Producer(conf)
 
 dlq_producer = create_producer()

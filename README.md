@@ -78,3 +78,30 @@ A GitHub Actions workflow (`.github/workflows/ci.yml`) is configured to:
 - Run unit tests on every push/PR to `main`.
 - Build Docker images to ensure validity.
 
+## Cloud Deployment (Free Tier)
+
+To deploy this project for free, we use a serverless stack:
+- **Kafka**: [Upstash](https://upstash.com/) (Free Tier)
+- **Database**: [Neon](https://neon.tech/) (Free Tier Postgres)
+- **Compute**: [Render](https://render.com/) (Free Tier)
+
+### 1. Setup Resources
+1.  **Upstash**: Create a Kafka cluster. Get `Bootstrap Server`, `Username`, and `Password`.
+2.  **Neon**: Create a Postgres project. Get the `Connection String` (e.g., `postgresql://user:pass@ep-xyz.aws.neon.tech/neondb?sslmode=require`). Run the contents of `postgres/init.sql` in the Neon SQL Editor.
+
+### 2. Deploy on Render
+1.  Push this repo to your GitHub.
+2.  Sign up for Render and link your GitHub account.
+3.  Go to **Blueprints** -> **New Blueprint Instance**.
+4.  Select your repo. Render will detect `render.yaml`.
+5.  Fill in the environment variables when prompted:
+    - `DATABASE_URL`: Your Neon connection string.
+    - `KAFKA_BOOTSTRAP_SERVERS`: Your Upstash URL.
+    - `KAFKA_SASL_USERNAME`: Your Upstash Username.
+    - `KAFKA_SASL_PASSWORD`: Your Upstash Password.
+6.  Click **Apply**. Render will deploy the API, Processor, and Simulator.
+
+### 3. Verify
+Once deployed, access your API at the URL provided by Render (e.g., `https://telemetry-api-xyz.onrender.com/docs`).
+
+

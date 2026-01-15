@@ -7,6 +7,13 @@ class Settings(BaseSettings):
     KAFKA_TOPIC_DLQ: str = os.getenv("KAFKA_TOPIC_DLQ", "telemetry.dlq")
     KAFKA_GROUP_ID: str = os.getenv("KAFKA_GROUP_ID", "telemetry-processor-group")
     
+    # Kafka Security
+    KAFKA_SASL_USERNAME: str = os.getenv("KAFKA_SASL_USERNAME", "")
+    KAFKA_SASL_PASSWORD: str = os.getenv("KAFKA_SASL_PASSWORD", "")
+    KAFKA_SECURITY_PROTOCOL: str = os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT")
+    KAFKA_SASL_MECHANISM: str = os.getenv("KAFKA_SASL_MECHANISM", "SCRAM-SHA-256")
+
+    
     DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://admin:password@postgres:5432/telemetry")
 
     class Config:

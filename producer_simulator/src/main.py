@@ -56,6 +56,14 @@ def main():
         'linger.ms': 100 # Batching
     }
 
+    if settings.KAFKA_SASL_USERNAME:
+        conf.update({
+            'security.protocol': settings.KAFKA_SECURITY_PROTOCOL,
+            'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
+            'sasl.username': settings.KAFKA_SASL_USERNAME,
+            'sasl.password': settings.KAFKA_SASL_PASSWORD,
+        })
+
     producer = Producer(conf)
 
     # Pre-generate devices structure

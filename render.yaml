@@ -1,0 +1,56 @@
+services:
+  # 1. API Service (Web Service)
+  - type: web
+    name: telemetry-api
+    env: python
+    buildCommand: pip install -r api_service/requirements.txt
+    startCommand: uvicorn api_service.src.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+
+  # 2. Stream Processor (Background Worker)
+  - type: worker
+    name: stream-processor
+    env: python
+    buildCommand: pip install -r stream_processor/requirements.txt
+    startCommand: python -m stream_processor.src.main
+    envVars:
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_SASL_USERNAME
+        sync: false
+      - key: KAFKA_SASL_PASSWORD
+        sync: false
+      - key: KAFKA_SECURITY_PROTOCOL
+        value: SASL_SSL
+      - key: KAFKA_SASL_MECHANISM
+        value: SCRAM-SHA-256
+      - key: DATABASE_URL
+        sync: false
+      - key: PYTHONPATH
+        value: /opt/render/project/src
+
+  # 3. Producer Simulator (Background Worker)
+  - type: worker
+    name: producer-simulator
+    env: python
+    buildCommand: pip install -r producer_simulator/requirements.txt
+    startCommand: python -m producer_simulator.src.main
+    envVars:
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
+      - key: KAFKA_SASL_USERNAME
+        sync: false
+      - key: KAFKA_SASL_PASSWORD
+        sync: false
+      - key: KAFKA_SECURITY_PROTOCOL
+        value: SASL_SSL
+      - key: KAFKA_SASL_MECHANISM
+        value: SCRAM-SHA-256
+      - key: EVENTS_PER_SECOND
+        value: "2"
+      - key: PYTHONPATH
+        value: /opt/render/project/src

@@ -6,6 +6,13 @@ class Settings(BaseSettings):
     KAFKA_TOPIC: str = os.getenv("KAFKA_TOPIC", "telemetry.events")
     EVENTS_PER_SECOND: int = int(os.getenv("EVENTS_PER_SECOND", "5"))
     
+    # Kafka Security
+    KAFKA_SASL_USERNAME: str = os.getenv("KAFKA_SASL_USERNAME", "")
+    KAFKA_SASL_PASSWORD: str = os.getenv("KAFKA_SASL_PASSWORD", "")
+    KAFKA_SECURITY_PROTOCOL: str = os.getenv("KAFKA_SECURITY_PROTOCOL", "PLAINTEXT")
+    KAFKA_SASL_MECHANISM: str = os.getenv("KAFKA_SASL_MECHANISM", "SCRAM-SHA-256")
+
+    
     # Simulation Config
     NUM_SITES: int = 3
     ZONES_PER_SITE: int = 5
