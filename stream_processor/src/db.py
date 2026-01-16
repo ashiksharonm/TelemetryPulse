@@ -1,6 +1,6 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from src.config import settings
+from stream_processor.src.config import settings
 import logging
 
 logger = logging.getLogger("stream_processor.db")
