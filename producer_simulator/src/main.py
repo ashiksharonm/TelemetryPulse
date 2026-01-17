@@ -85,7 +85,35 @@ def producer_loop():
         })
 
 
+
     producer = Producer(conf)
+
+    # --- Topic Creation Logic ---
+    from confluent_kafka.admin import AdminClient, NewTopic
+    try:
+        admin_client = AdminClient(conf)
+        topic_name = settings.KAFKA_TOPIC
+        
+        # Check if topic exists
+        metadata = admin_client.list_topics(timeout=10)
+        if topic_name not in metadata.topics:
+            logger.info(f"Topic '{topic_name}' not found. Attempting to create it...")
+            new_topic = NewTopic(topic_name, num_partitions=1, replication_factor=1)
+            fs = admin_client.create_topics([new_topic])
+            
+            for topic, f in fs.items():
+                try:
+                    f.result()  # The result itself is None
+                    logger.info(f"Topic '{topic}' created successfully")
+                except Exception as e:
+                    logger.error(f"Failed to create topic '{topic}': {e}. Please create it manually.")
+        else:
+            logger.info(f"Topic '{topic_name}' exists.")
+            
+    except Exception as e:
+        logger.warning(f"Failed to check/create topic: {e}")
+    # ----------------------------
+
 
     # Pre-generate devices structure
     devices = []
