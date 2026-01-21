@@ -1,69 +1,44 @@
 services:
-  # 1. API Service (Web Service)
+  # 1. API Service
   - type: web
     name: telemetry-api
     plan: free
     env: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r api_service/requirements.txt
-    startCommand: uvicorn api_service.src.main:app --host 0.0.0.0 --port $PORT
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    startCommand: uvicorn src.api.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         sync: false
+      - key: KAFKA_BOOTSTRAP_SERVERS
+        sync: false
       - key: PYTHONPATH
         value: /opt/render/project/src
+      # Add Kafka/SSL placeholders...
 
-  # 2. Stream Processor (Converted to Web for Free Tier)
+  # 2. Stream Processor
   - type: web
     name: stream-processor
     plan: free
     env: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r stream_processor/requirements.txt
-    startCommand: python -m stream_processor.src.main
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    startCommand: python src/processor_main.py
     envVars:
-      - key: KAFKA_BOOTSTRAP_SERVERS
-        sync: false
-      - key: KAFKA_SASL_USERNAME
-        value: ""
-      - key: KAFKA_SASL_PASSWORD
-        value: ""
-      - key: KAFKA_SECURITY_PROTOCOL
-        value: SASL_SSL
-      - key: KAFKA_SASL_MECHANISM
-        value: SCRAM-SHA-256
-      - key: KAFKA_SSL_CA
-        sync: false
-      - key: KAFKA_SSL_CERT
-        sync: false
-      - key: KAFKA_SSL_KEY
-        sync: false
       - key: DATABASE_URL
+        sync: false
+      - key: KAFKA_BOOTSTRAP_SERVERS
         sync: false
       - key: PYTHONPATH
         value: /opt/render/project/src
 
-  # 3. Producer Simulator (Converted to Web for Free Tier)
+  # 3. Producer Simulator
   - type: web
     name: producer-simulator
     plan: free
     env: python
-    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r producer_simulator/requirements.txt
-    startCommand: python -m producer_simulator.src.main
+    buildCommand: pip install --upgrade pip setuptools wheel && pip install -r requirements.txt
+    startCommand: python src/simulator_main.py
     envVars:
       - key: KAFKA_BOOTSTRAP_SERVERS
-        sync: false
-      - key: KAFKA_SASL_USERNAME
-        sync: false
-      - key: KAFKA_SASL_PASSWORD
-        sync: false
-      - key: KAFKA_SECURITY_PROTOCOL
-        value: SASL_SSL
-      - key: KAFKA_SASL_MECHANISM
-        value: SCRAM-SHA-256
-      - key: KAFKA_SSL_CA
-        sync: false
-      - key: KAFKA_SSL_CERT
-        sync: false
-      - key: KAFKA_SSL_KEY
         sync: false
       - key: EVENTS_PER_SECOND
         value: "2"
