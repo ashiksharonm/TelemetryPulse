@@ -110,8 +110,10 @@ git clone https://github.com/ashiksharonm/TelemetryPulse.git
 cd TelemetryPulse
 ```
 
-**2. Start the Stack**
+**2. Start the Stack (Using Makefile or Docker Compose)**
 ```bash
+make up
+# OR
 docker-compose up -d --build
 ```
 *Creates: Redpanda, Console, Postgres, API, Stream Processor, Producer.*
@@ -123,13 +125,13 @@ docker-compose up -d --build
 
 **4. Stop the Stack**
 ```bash
-docker-compose down -v
+make down
 ```
 
 ### B. Cloud Deployment (Render + Aiven + Neon)
 
 **1. Prerequisites**
-*   **Neon**: Create Project -> Get Connection String. Run `postgres/init.sql` in SQL Editor.
+*   **Neon**: Create Project -> Get Connection String. Run `src/db/migrations.sql` in SQL Editor.
 *   **Aiven**: Create Kafka Service -> Get Service URI. Download `ca.pem`, `service.cert`, `service.key`.
 *   **Render**: Link GitHub Repo.
 
