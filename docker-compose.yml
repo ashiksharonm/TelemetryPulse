@@ -1,7 +1,9 @@
+version: '3.8'
+
 services:
   redpanda:
-    image: redpandadata/redpanda:latest
-    container_name: telemetry_redpanda
+    image: docker.redpanda.com/redpandadata/redpanda:v23.3.1
+    container_name: redpanda
     command:
       - redpanda
       - start
@@ -9,43 +11,29 @@ services:
       - --memory 1G
       - --reserve-memory 0M
       - --overprovisioned
-      - --kafka-addr internal://0.0.0.0:9092,external://0.0.0.0:19092
-      - --advertise-kafka-addr internal://redpanda:9092,external://localhost:19092
-      - --pandaproxy-addr internal://0.0.0.0:8082,external://0.0.0.0:18082
-      - --advertise-pandaproxy-addr internal://redpanda:8082,external://localhost:18082
-      - --schema-registry-addr internal://0.0.0.0:8081,external://0.0.0.0:18081
-      - --rpc-addr 0.0.0.0:33145
-      - --advertise-rpc-addr redpanda:33145
+      - --node-id 0
+      - --check=false
+      - --kafka-addr PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+      - --advertise-kafka-addr PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+      - --pandaproxy-addr 0.0.0.0:8082
+      - --advertise-pandaproxy-addr localhost:8082
     ports:
-      - 18081:18081
-      - 18082:18082
-      - 19092:19092
-      - 9644:9644
+      - 9092:9092
+      - 8081:8081
+      - 8082:8082
     volumes:
-      - redpanda_data:/var/lib/redpanda/data
+      - redpanda-data:/var/lib/redpanda/data
     healthcheck:
-      test: ["CMD-SHELL", "rpk cluster health"]
+      test: ["CMD-SHELL", "rpk cluster health | grep -E 'Healthy|OK'"]
       interval: 10s
       timeout: 5s
       retries: 5
 
   console:
-    image: redpandadata/console:latest
-    container_name: telemetry_console
+    image: docker.redpanda.com/redpandadata/console:v2.4.3
+    container_name: redpanda-console
     entrypoint: /bin/sh
-    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
-    environment:
-      CONFIG_FILEPATH: /tmp/config.yml
-      CONSOLE_CONFIG_FILE: |
-        kafka:
-          brokers: ["redpanda:9092"]
-        schemaRegistry:
-          enabled: true
-          urls: ["http://redpanda:8081"]
-        redpanda:
-          adminApi:
-            enabled: true
-            urls: ["http://redpanda:9644"]
+    command: -c "echo \"kafka.brokers: redpanda:29092\" > /tmp/config.yaml && /app/console"
     ports:
       - 8080:8080
     depends_on:
@@ -53,7 +41,7 @@ services:
 
   postgres:
     image: postgres:15-alpine
-    container_name: telemetry_postgres
+    container_name: postgres
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
@@ -61,52 +49,32 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - pg-data:/var/lib/postgresql/data
+      - ./src/db/migrations.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U admin -d telemetry"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  producer_simulator:
+  api:
     build: 
-      context: ./producer_simulator
+      context: .
       dockerfile: Dockerfile
-    container_name: telemetry_producer
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
-      KAFKA_TOPIC: telemetry.events
-      EVENTS_PER_SECOND: 10
-    depends_on:
-      - redpanda
-
-  stream_processor:
-    build:
-      context: ./stream_processor
-      dockerfile: Dockerfile
-    container_name: telemetry_processor
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
-      KAFKA_TOPIC_EVENTS: telemetry.events
-      KAFKA_TOPIC_DLQ: telemetry.dlq
-      DATABASE_URL: postgresql://admin:password@postgres:5432/telemetry
-    depends_on:
-      - redpanda
-      - postgres
-
-  api_service:
-    build:
-      context: ./api_service
-      dockerfile: Dockerfile
-    container_name: telemetry_api
-    environment:
-      DATABASE_URL: postgresql://admin:password@postgres:5432/telemetry
+    container_name: telemetry-api
+    command: uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - .:/app
     ports:
       - 8000:8000
+    environment:
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/telemetry
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
+      - PYTHONPATH=/app
     depends_on:
       - postgres
+      - redpanda
 
 volumes:
-  redpanda_data:
-  postgres_data:
+  redpanda-data:
+  pg-data:
