@@ -9,9 +9,15 @@ import json
 import pandas as pd
 from datetime import datetime
 import threading
+import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from prometheus_client import start_http_server, Counter, Gauge
 
 logger = setup_logger("stream_processor")
+
+KAFKA_MESSAGES_CONSUMED = Counter("kafka_messages_consumed_total", "Total messages consumed")
+KAFKA_CONSUMER_LAG = Gauge("kafka_consumer_lag", "Simulated consumer lag")
+PROCESSING_TIME = Gauge("event_processing_seconds", "Time spent processing an event")
 
 # --- Dummy Server for Render ---
 class HealthCheckHandler(BaseHTTPRequestHandler):
@@ -94,8 +100,14 @@ def run_processor():
                 continue
             
             try:
+                start_time = time.time()
                 data = json.loads(msg.value().decode('utf-8'))
                 process_event(data, session)
+                
+                KAFKA_MESSAGES_CONSUMED.inc()
+                # Dummy simulated lag calculation
+                KAFKA_CONSUMER_LAG.set(max(0, KAFKA_CONSUMER_LAG._value.get() - 1))
+                PROCESSING_TIME.set(time.time() - start_time)
             except Exception as e:
                 logger.error(f"Failed to process msg: {e}")
                 session.rollback()
@@ -106,4 +118,8 @@ def run_processor():
 if __name__ == "__main__":
     t = threading.Thread(target=run_health_server, daemon=True)
     t.start()
+    
+    # Start prometheus metrics server on 8001
+    start_http_server(8001)
+    
     run_processor()

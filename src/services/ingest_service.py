@@ -13,6 +13,10 @@ class IngestService:
             'sasl.mechanism': settings.KAFKA_SASL_MECHANISM,
             'sasl.username': settings.KAFKA_SASL_USERNAME,
             'sasl.password': settings.KAFKA_SASL_PASSWORD,
+            'linger.ms': 5,             # Batching threshold
+            'batch.size': 32768,        # Increased batch size for throughput
+            'compression.type': 'lz4',  # Efficient compression
+            'acks': '1'                 # Leader-only acknowledgment for speed
         }
         
         # SSL Setup (Aiven)

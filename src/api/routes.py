@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from src.db.session import get_db
 from src.db.models import RawEvent, Alert
 from src.api.schemas import IngestResponse, DeviceStats, AlertSchema
@@ -41,6 +42,20 @@ def get_recent_alerts(limit: int = 10, db: Session = Depends(get_db)):
     alerts = db.query(Alert).order_by(Alert.triggered_at.desc()).limit(limit).all()
     return alerts
 
-@router.get("/health")
-def health_check():
-    return {"status": "ok", "version": "2.0.0-oracle-ready"}
+@router.get("/health/live", status_code=status.HTTP_200_OK)
+def liveness_check():
+    """Basic ping for container orchestrator (e.g. Kubernetes)"""
+    return {"status": "alive"}
+
+@router.get("/health/ready", status_code=status.HTTP_200_OK)
+def readiness_check(db: Session = Depends(get_db)):
+    """Deep check: DB and upstream dependencies"""
+    try:
+        # Check DB connection
+        db.execute(text("SELECT 1"))
+        # Ensure Kafka ingest service is initialized
+        if not ingest_service:
+            raise Exception("Kafka not initialized")
+        return {"status": "ready"}
+    except Exception as e:
+        raise HTTPException(status_code=503, detail="Service not ready")

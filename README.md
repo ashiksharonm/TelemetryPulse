@@ -13,6 +13,25 @@ TelemetryPulse is a production-grade, real-time IoT event pipeline. It simulates
     *   **Resilience**: Auto-reconnecting DB sessions and Kafka consumers.
     *   **CI/CD**: Automated testing via GitHub Actions.
 
+## 📊 Observability & Dashboards
+The system includes a production-grade observability stack tracking 5000+ events per second.
+
+### Grafana Dashboards
+![Grafana Real-time Dashboard 1](images/grafana_dashboard_1.png)
+![Grafana Real-time Dashboard 2](images/grafana_dashboard_2.png)
+
+### Prometheus Targets & Metrics
+![Prometheus Targets](images/prometheus_targets.png)
+![Prometheus Graph](images/prometheus_graph.png)
+
+### FastAPI Swagger UI
+![Swagger UI](images/swagger_ui.png)
+
+### Terminal Logs & Alertmanager
+![Terminal Logs](images/terminal_logs.png)
+![Alertmanager UI](images/alertmanager_ui.png)
+
+
 ## 📂 Project Structure
 Emulates a standard enterprise monorepo:
 ```

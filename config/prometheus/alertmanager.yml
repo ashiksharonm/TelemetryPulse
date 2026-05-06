@@ -1,0 +1,6 @@
+route:
+  receiver: 'default-receiver'
+  group_by: ['alertname']
+
+receivers:
+  - name: 'default-receiver'

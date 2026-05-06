@@ -33,7 +33,9 @@ services:
     image: docker.redpanda.com/redpandadata/console:v2.4.3
     container_name: redpanda-console
     entrypoint: /bin/sh
-    command: -c "echo \"kafka.brokers: redpanda:29092\" > /tmp/config.yaml && /app/console"
+    command:
+      - "-c"
+      - "echo \"kafka.brokers: [redpanda:29092]\" > /tmp/config.yaml && /app/console"
     ports:
       - 8080:8080
     depends_on:
@@ -66,7 +68,7 @@ services:
     volumes:
       - .:/app
     ports:
-      - 8000:8000
+      - 8002:8000
     environment:
       - DATABASE_URL=postgresql://admin:password@postgres:5432/telemetry
       - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
@@ -75,6 +77,66 @@ services:
       - postgres
       - redpanda
 
+  processor:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: telemetry-processor
+    command: python -m src.processor_main
+    volumes:
+      - .:/app
+    environment:
+      - DATABASE_URL=postgresql://admin:password@postgres:5432/telemetry
+      - KAFKA_BOOTSTRAP_SERVERS=redpanda:29092
+      - PYTHONPATH=/app
+    ports:
+      - 8001:8001
+    depends_on:
+      - postgres
+      - redpanda
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: prometheus
+    volumes:
+      - ./config/prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - "9090:9090"
+
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: alertmanager
+    volumes:
+      - ./config/prometheus:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    ports:
+      - "9093:9093"
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    container_name: node_exporter
+    ports:
+      - "9100:9100"
+
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+
 volumes:
   redpanda-data:
   pg-data:
+  prometheus_data:
+  grafana_data:
